@@ -6,8 +6,9 @@ POST http://localhost:3000/api/v1/users
 Content-Type: application/json
 
 {
-    "name": "BoyDarDer",
-    "email": "johnfon@example.com"
+    "username": "BukBoyDer",
+    "email": "bukboy@example.com",
+    "password": "pass123"
 }
 
 ### DELETE request to delete a user

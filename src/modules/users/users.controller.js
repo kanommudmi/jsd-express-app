@@ -1,4 +1,5 @@
 import { users } from "../../mock-db/users.js";
+import { User } from "./users.model.js";
 
 export const testAPI = (req, res) => {
   res.send(`<!doctype html>
@@ -31,11 +32,29 @@ export const testAPI = (req, res) => {
       </main>
     </body>
   </html>`);
-}
+};
 
-export const getUsers = (req, res) => {
+// ❌ route handler: get all users (mock)
+export const getUsers2 = (req, res) => {
   res.status(200).json(users);
   // console.log(res);
+};
+
+// ✅ route handler: get all users from the database
+export const getUsers = async (req, res) => {
+  try {
+    const users = await User.find().select("-password");
+
+    return res.status(200).json({
+      success: true,
+      data: users,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: "Failed to get users...",
+    });
+  }
 };
 
 export const deleteUser = (req, res) => {
@@ -52,7 +71,8 @@ export const deleteUser = (req, res) => {
   }
 };
 
-export const createUser = (req, res) => {
+// ❌ router handler create a new user (mock)
+export const createUser2 = (req, res) => {
   const { name, email } = req.body;
 
   const newUser = {
@@ -64,4 +84,42 @@ export const createUser = (req, res) => {
   users.push(newUser);
 
   res.status(201).json(newUser);
+};
+
+// ✅ router handler create a new user in the database
+export const createUser = async (req, res) => {
+  const { username, email, password } = req.body;
+
+  if (!username || !email || !password) {
+    return res.status(400).json({
+      success: false,
+      error: "username, email, and password are required",
+    });
+  }
+
+  try {
+    // mongoDB will return data by json
+    const doc = await User.create({ username, email, password });
+
+    // change from json to js object
+    const safe = doc.toObject();
+    // delete key password
+    delete safe.password;
+
+    return res.status(201).json({
+      success: true,
+      data: safe,
+    });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        error: "Email already in use!",
+      });
+    }
+    return res.status(500).json({
+      success: false,
+      error: "Failed to create user...",
+    });
+  }
 };
