@@ -1,8 +1,14 @@
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
+import helmet from "helmet";
 import { router as apiRouters } from "./routes/index.js";
+import { limiter } from "./middlewares/rateLimiter.js";
 
 export const app = express();
+
+// Globla middleware
+app.use(helmet());
 
 const corsOptions = {
   origin: [
@@ -11,11 +17,19 @@ const corsOptions = {
     "http://localhost:5175",
     "https://react-assessment-solution-for-expre.vercel.app",
   ],
+  credentials: true, // ✅ allow cookies to be sent
 };
 
 app.use(cors(corsOptions));
 
+app.set("trust proxxy", 1)
+
+app.use(limiter);
+
 app.use(express.json());
+
+// Middleware to parse cookies (required for cookie-based auth)
+app.use(cookieParser());
 
 app.get("/", (req, res) => {
   res.send("hello world");
